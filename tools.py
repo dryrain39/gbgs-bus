@@ -73,7 +73,7 @@ def get_all_bus_position_offset_related_bus_stop(bus_stop_id):
         node_list = cached_get_bus_line_node_list(bus_line["BUSLINEID"])
         logging.debug(bus_line["BUSLINEID"])
         logging.debug(bus_line["BUSLINENO"])
-        get_bus_position_offset_from_node(bus_stop_id="360020900", line_node_list=node_list,
+        get_bus_position_offset_from_node(bus_stop_id=bus_stop_id, line_node_list=node_list,
                                           write_lck=False)
         bus_line["node_list"] = node_list
         del bus_line["node_list"]["forwardStation"]
