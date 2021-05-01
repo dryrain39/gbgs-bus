@@ -1,5 +1,6 @@
 from bus.fetch import *
 from cache import cached_get_bus_line_node_list
+import operator
 
 
 # dict 안에서 요소에 맞는 인덱스 반환
@@ -13,6 +14,16 @@ def find_in_list(dictionary_list, key, value):
             break
 
     return idx, element
+
+
+# 차 번호를 이용하여 노선의 방향을 반환한다.
+def get_bus_direction(car_no, line_node_list):
+    for car in line_node_list["forwardPosition"] + line_node_list["reversePosition"]:
+        if car_no == car["CARNO"]:
+            return car["BUSDIRECTCD"]
+
+    return None
+
 
 
 # 버스 실시간 위치(forwardPosition, ReversePosition)와 특정 정류장 사이의 거리를 계산한다.
@@ -71,8 +82,6 @@ def get_all_bus_position_offset_related_bus_stop(bus_stop_id):
 
     for bus_line in bus_lines["bus_line_list"]:
         node_list = cached_get_bus_line_node_list(bus_line["BUSLINEID"])
-        logging.debug(bus_line["BUSLINEID"])
-        logging.debug(bus_line["BUSLINENO"])
         get_bus_position_offset_from_node(bus_stop_id=bus_stop_id, line_node_list=node_list,
                                           write_lck=False)
         bus_line["node_list"] = node_list
@@ -82,6 +91,77 @@ def get_all_bus_position_offset_related_bus_stop(bus_stop_id):
     return bus_lines
 
 
+# 특정 정류장의 모든 버스 실시간 위치를 반환한다.
+def get_all_b_p_pretty_json(bus_stop_id, skip_last_station=False):
+    bus_positions = get_all_bus_position_offset_related_bus_stop(bus_stop_id)
+
+    for bus_line in bus_positions["bus_line_list"]:
+        bus_line["bus_positions"] = []
+        for bus in bus_line["node_list"]["forwardPosition"] + bus_line["node_list"]["reversePosition"]:
+            if "edited" not in bus.keys() or bus["edited"] is not True:
+                continue
+
+            # 이미 지나간 버스는 건너뜀
+            if bus["offset"] > 0:
+                continue
+
+            # 검색 정류장과 종점이 일치할 경우 건너뜀.
+            if skip_last_station is True and bus["to_bus_stop"]["BUSSTOPID"] == bus_stop_id:
+                continue
+
+            bus_line["bus_positions"].append(bus)
+
+        # 정렬
+        bus_line["bus_positions"].sort(key=operator.itemgetter('offset'), reverse=True)
+
+        del bus_line["node_list"]
+
+    return bus_positions
+
+
+def get_all_b_p_pretty_text(bus_stop_id):
+    bus_data = get_all_b_p_pretty_json(bus_stop_id, skip_last_station=True)
+
+    before_text = {
+        0: "출발",
+        1: "전"
+    }
+    text = ""
+
+    for bus in bus_data["bus_line_list"]:
+        if len(bus["bus_positions"]) == 0:
+            continue
+
+        bus_side = f'\n{bus["BUSLINESIDE"]}' if bus["BUSLINESIDE"] is not None else ""
+
+        bus_name = f"--- {bus['BUSLINENO']} 버스 ---{bus_side}"
+
+        bus_position_list = []
+
+        for idx, bus_position in enumerate(bus["bus_positions"]):
+            # 최근 5개만 표시
+            if idx >= 5:
+                break
+
+            # 0, 1, 전이면 도착, 전 으로 표시하게
+            if abs(bus_position['offset']) in before_text.keys():
+                b = before_text[idx]
+            else:
+                b = f"{abs(bus_position['offset'])}전"
+
+            # 최근 2개의 도착 정보는 행선지를 표시하도록 함
+            d = f'(종점: {bus_position["to_bus_stop"]["BUSSTOPNAME"]})' if idx < 2 else ""
+
+            bus_position_list.append(f"{b}{d}")
+
+        text += "\n".join([
+            bus_name,
+            ", ".join(bus_position_list)
+        ]) + "\n"
+
+    return text
+
+
 if __name__ == '__main__':
     import logging
     import time
@@ -89,9 +169,13 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
     d = time.time()
-    r = get_all_bus_position_offset_related_bus_stop("360020900")
-    print(time.time() - d)
+    # r = get_all_bus_position_offset_related_bus_stop("360020900")
+    #
     import json
 
-    print(json.dump(r, open("rd.json", "w", encoding="utf-8"), ensure_ascii=False))
+    #
+    # print(json.dump(r, open("rd.json", "w", encoding="utf-8"), ensure_ascii=False))
 
+    print(json.dumps(get_all_b_p_pretty_json("360005700", skip_last_station=True), ensure_ascii=False))
+    print(get_all_b_p_pretty_text("360005700"))
+    print(time.time() - d)
