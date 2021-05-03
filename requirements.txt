@@ -7,6 +7,8 @@ diskcache==5.2.1
 dnspython==1.16.0
 Flask==1.1.2
 Flask-SocketIO==5.0.1
+gevent==21.1.2
+gevent-websocket==0.10.1
 greenlet==1.0.0
 idna==2.10
 itsdangerous==1.1.0
