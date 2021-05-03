@@ -1,4 +1,5 @@
 from gevent import monkey
+
 monkey.patch_all()
 
 from flask import Flask, request, abort, redirect
@@ -16,7 +17,7 @@ def bus():
     try:
         socket_io.emit("ping", "hello")
         return flask_get_all_bus_position(request.args.get('bus_stop'), skip_last_station=True,
-                                          socketio_send=socket_io.emit, gevent=socket_io)
+                                          socket_io=socket_io)
     except:
         abort(500)
 

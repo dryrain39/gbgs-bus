@@ -6,20 +6,20 @@ from tools import get_all_bus_position_offset_related_bus_stop, get_bus_position
 
 
 # 특정 정류장의 모든 버스 실시간 위치를 반환한다.
-def flask_get_all_bus_position_offset_related_bus_stop(bus_stop_id, socketio_send=None, gevent=None):
+def flask_get_all_bus_position_offset_related_bus_stop(bus_stop_id, socket_io=None):
     bus_lines = get_bus_line_list(bus_stop_id)
 
     for bus_line in bus_lines["bus_line_list"]:
         node_list = cached_get_bus_line_node_list(bus_line["BUSLINEID"])
-        if socketio_send is not None:
-            socketio_send("load_msg", {
+        if socket_io is not None:
+            socket_io.send("load_msg", {
                 "func": "get_bus_position_offset_from_node",
                 "bus_stop_id": bus_stop_id,
                 "bus_line_id": bus_line["BUSLINEID"],
                 "bus_line_name": bus_line["BUSLINENO"],
                 "bus_line_side": bus_line["BUSLINESIDE"],
             })
-            gevent.sleep(.01)
+            socket_io.sleep(.01)
         get_bus_position_offset_from_node(bus_stop_id=bus_stop_id, line_node_list=node_list,
                                           write_lck=False)
         bus_line["node_list"] = node_list
@@ -30,8 +30,8 @@ def flask_get_all_bus_position_offset_related_bus_stop(bus_stop_id, socketio_sen
 
 
 # 특정 정류장의 모든 버스 실시간 위치를 반환한다.
-def flask_get_all_bus_position(bus_stop_id, skip_last_station=False, socketio_send=None, gevent=None):
-    bus_positions = flask_get_all_bus_position_offset_related_bus_stop(bus_stop_id, socketio_send, gevent)
+def flask_get_all_bus_position(bus_stop_id, skip_last_station=False, socket_io=None):
+    bus_positions = flask_get_all_bus_position_offset_related_bus_stop(bus_stop_id, socket_io)
 
     for bus_line in bus_positions["bus_line_list"]:
         bus_line["bus_positions"] = []
