@@ -16,7 +16,7 @@
             border-collapse: collapse;
         }
 
-        /* 색약 컬러: 정방향: #785EF0 , 역방향: #FE6100 , 저상표시: #ADC1FF */
+        /* 색약 컬러: 정방향: #785EF0 , 역방향: #FE6100 , 강조: #ADC1FF */
 
         .direction-0 {
             color: #FE6100;
@@ -24,6 +24,10 @@
 
         .direction-1 {
             color: #785EF0;
+        }
+
+        .bg-selected {
+            background-color: #ffa8a8 !important
         }
 
         .bus-title {
@@ -214,7 +218,7 @@
 
     function update(bus_stop) {
         $.ajax({
-            url: '/bus.json' + "?bus_stop=" + bus_stop,
+            url: "/bus.json?bus_stop=" + bus_stop,
             success: function (data) {
                 console.log(data)
                 if (data["bus_line_list"].length > 0) {
@@ -236,6 +240,18 @@
             }
         })
     }
+
+    $("tbody").on("click", "tr > td.bus-number", function(e){
+        var current_bus_number = $(this).data('bus')
+        $(".bus-number").each(function(i, e){
+            console.log($(e))
+            if($(e).data('bus') === current_bus_number){
+                $(e).addClass('bg-selected')
+            }else{
+                $(e).removeClass('bg-selected')
+            }
+        })
+    })
 
     function update_table(data) {
 
