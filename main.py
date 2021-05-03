@@ -35,4 +35,4 @@ if __name__ == '__main__':
     import logging
 
     logging.basicConfig(level=logging.DEBUG)
-    socket_io.run(app=app, debug=True, host="0.0.0.0")
+    socket_io.run(app=app, debug=False, host="0.0.0.0")
