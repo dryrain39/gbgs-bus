@@ -4,13 +4,14 @@ from bus.fetch import search_bus_stop
 from tools2 import flask_get_all_bus_position
 from flask_socketio import SocketIO, send
 
-app = Flask(__name__, static_url_path='', static_folder='html', )
+app = Flask(__name__, static_url_path='', static_folder='html')
 socket_io = SocketIO(app)
 
 
 @app.route('/bus.json')
 def bus():
     try:
+        socket_io.emit("ping", "hello")
         return flask_get_all_bus_position(request.args.get('bus_stop'), skip_last_station=True,
                                           socketio_send=socket_io.emit)
     except:
