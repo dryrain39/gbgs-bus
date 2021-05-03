@@ -181,6 +181,7 @@
 
     $(document).ready(function () {
         socket = io.connect();
+        socket.emit("ping", 1);
 
         socket.on('load_msg', function (msg) {
             console.log(msg)

@@ -3,6 +3,9 @@ from flask import Flask, request, abort, redirect
 from bus.fetch import search_bus_stop
 from tools2 import flask_get_all_bus_position
 from flask_socketio import SocketIO, send
+from gevent import monkey
+
+monkey.patch_all()
 
 app = Flask(__name__, static_url_path='', static_folder='html')
 socket_io = SocketIO(app)
