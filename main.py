@@ -16,7 +16,7 @@ def bus():
     try:
         socket_io.emit("ping", "hello")
         return flask_get_all_bus_position(request.args.get('bus_stop'), skip_last_station=True,
-                                          socketio_send=socket_io.emit, gevent=gevent)
+                                          socketio_send=socket_io.emit, gevent=socket_io)
     except:
         abort(500)
 
