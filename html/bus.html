@@ -108,7 +108,7 @@
             <thead>
             <tr class="bus-title">
                 <th colspan="6">
-                    <h2><span id="name"></span></h2>
+                    <h2><span id="name" onclick="window.location = 'index.html'"></span></h2>
                 </th>
             </tr>
             </thead>
@@ -209,7 +209,7 @@
 
     function load_done() {
         load_ok = true;
-        // socket.close();
+        socket.close();
     }
 
     function update(bus_stop) {
