@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>경산시 버스정보 조회 시스템</title>
+    <script src="jquery-3.6.0.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+            integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+            crossorigin="anonymous"></script>
+    <style>
+        table {
+            /*border: 1px solid #444444;*/
+            border-collapse: collapse;
+        }
+
+        /* 색약 컬러: 정방향: #785EF0 , 역방향: #FE6100 , 저상표시: #ADC1FF */
+
+        .direction-0 {
+            color: #FE6100;
+        }
+
+        .direction-1 {
+            color: #785EF0;
+        }
+
+        .bus-title {
+            border-bottom: 1px solid #000000;
+            text-align: center;
+        }
+
+
+        .bus-mark {
+            width: 1.2rem;
+            text-align: right;
+            vertical-align: middle;
+            font-weight: bold;
+            /*background-color: #dddddd;*/
+        }
+
+        .bus-number {
+            width: 3.8rem;
+            text-align: center;
+            vertical-align: middle;
+            font-weight: bold;
+            background-color: #dddddd;
+        }
+
+        .before-text {
+            text-align: left;
+            vertical-align: middle;
+            /*font-weight: bold;*/
+            /*background-color: #dddddd;*/
+        }
+
+
+        .bus-current-station {
+            text-align: right;
+            overflow: hidden;
+            /*white-space: nowrap;*/
+            size: 0.7rem;
+
+        }
+
+        .arrow {
+            text-align: center;
+            width: 0.9rem;
+        }
+
+        .to-station {
+            text-align: left;
+            overflow: hidden;
+            /*white-space: nowrap;*/
+            size: 0.7rem;
+
+        }
+
+        .line-description {
+            font-size: 0.9rem;
+            color: #808080;
+            text-align: center;
+        }
+
+        .lf-bus {
+            background-color: #adc1ff !important;
+        }
+
+
+        .bus-bottom {
+            text-align: right;
+            vertical-align: middle;
+            border-bottom: 1px dashed #000000;
+
+        }
+
+
+    </style>
+</head>
+<body>
+
+
+<div class="container mt-3" style="justify-content: center;;">
+
+    <div class="d-flex justify-content-center">
+        <table>
+            <thead>
+            <tr class="bus-title">
+                <th colspan="6">
+                    <h2><span id="name"></span></h2>
+                </th>
+            </tr>
+            </thead>
+            <tr>
+                <td colspan="6"></td>
+            </tr>
+            <tbody id="tbd">
+
+            <tr>
+                <td colspan="6">
+                    잠시만 기다려 주세요..
+                </td>
+            </tr>
+
+
+            <!--            <tr>-->
+            <!--                <td class="bus-number">-->
+            <!--                    094-1-->
+            <!--                </td>-->
+            <!--                <td class="bus-mark">-->
+            <!--                    5-->
+            <!--                </td>-->
+            <!--                <td class="before-text">-->
+            <!--                    전-->
+            <!--                </td>-->
+            <!--                <td class="bus-current-station">-->
+            <!--                    숙천초교입구-->
+            <!--                </td>-->
+            <!--                <td class="arrow">-->
+            <!--                    ▷-->
+            <!--                <td class="to-station">-->
+            <!--                    상공회의소건너-->
+            <!--                </td>-->
+            <!--            </tr>-->
+            <!--            <tr>-->
+            <!--                <td class="line-description">-->
+            <!--                    저상-->
+            <!--                </td>-->
+            <!--                <td colspan="2" class="line-description">-->
+
+            <!--                </td>-->
+            <!--                <td colspan="3" class="line-description">-->
+            <!--                    황제→대구대→귀빈→대구대→북리→공단로-->
+            <!--                </td>-->
+            <!--            </tr>-->
+            <!--            <tr class="bus-bottom">-->
+            <!--                <td colspan="6"></td>-->
+            <!--            </tr>-->
+            <!--            <tr>-->
+            <!--                <td colspan="6"></td>-->
+            <!--            </tr>-->
+
+
+            </tbody>
+
+
+        </table>
+    </div>
+
+</div>
+<br>
+
+</body>
+</html>
+
+
+<script>
+    var socket;
+    var load_ok = false;
+
+    $(document).ready(function () {
+        var hash = location.hash.replace('#', '')
+        if (hash.length > 0) {
+            var param = hash.split("/")
+            $("#name").html(decodeURI(param[0]).replaceAll(/[<>\/\\"'`=\[\]]/ig, ""));
+            update(param[1]);
+        }
+
+        socket = io.connect("http://" + document.domain + ":" + location.port + "/");
+        socket.on('load_msg', function (msg) {
+            console.log(msg)
+            var line_side = msg["bus_line_side"] === hash ? `(${msg["bus_line_side"]})` : ""
+            if (!load_ok) {
+                $('#tbd').append(`<tr>
+                <td colspan="3">로드: </td>
+                <td colspan="3">
+                    ${msg["bus_line_name"]}${line_side}번
+                </td>
+            </tr>`)
+            }
+        });
+
+    })
+
+    function load_done() {
+        load_ok = true;
+        socket.close();
+    }
+
+    function update(bus_stop) {
+        $.ajax({
+            url: '/bus.json' + "?bus_stop=" + bus_stop,
+            success: function (data) {
+                console.log(data)
+                if (data["bus_line_list"].length > 0) {
+                    update_table(data);
+                } else {
+                    $('#tbd').empty().append(`<tr>
+                        <td colspan="6">
+                            이용 가능한 버스 노선이 없습니다.
+                        </td>
+                    </tr>`)
+                }
+            },
+            error: function () {
+                $('#tbd').empty().append(`<tr>
+                    <td colspan="6">
+                        데이터 로드 중 에러가 발생하였습니다.
+                    </td>
+                </tr>`)
+            }
+        })
+    }
+
+    function update_table(data) {
+
+        var bus_data = []
+
+        for (let i = 0; i < data["bus_line_list"].length; i++) {
+            var bus_line = data["bus_line_list"][i];
+
+            if (bus_line["bus_positions"].length === 0) {
+                continue;
+            }
+
+            for (let j = 0; j < bus_line["bus_positions"].length; j++) {
+                var bus = bus_line["bus_positions"][j];
+                bus["BUSLINENO"] = bus_line["BUSLINENO"]
+                bus["BUSLINESIDE"] = bus_line["BUSLINESIDE"] ? bus_line["BUSLINESIDE"] : "";
+
+                bus_data.push(bus)
+            }
+
+        }
+
+        bus_data.sort(function (a, b) {
+            if (a.offset > b.offset) {
+                return -1;
+            }
+            if (a.offset < b.offset) {
+                return 1;
+            }
+            return 0;
+        })
+
+        console.log(bus_data)
+        load_done();
+        $("#tbd").empty();
+
+        if(bus_data.length === 0){
+            $('#tbd').empty().append(`<tr>
+                <td colspan="6">
+                    지금은 이용 가능한 버스가 없습니다.
+                </td>
+            </tr>`)
+        }
+
+        for (let i = 0; i < bus_data.length; i++) {
+            var bus = bus_data[i];
+            add_bus("#tbd", bus)
+        }
+    }
+
+    // function make_table(target_selector, bus_name, bus_line_side) {
+    //     bus_line_side = bus_line_side ? bus_line_side : "";
+    //
+    //     $(target_selector).append(`<div class="card col-auto mb-3">
+    //     <table id="bus-${bus_name}">
+    //     <thead>
+    //     <tr class="bus-title">
+    //         <th colspan="2">
+    //             ▼
+    //         </th>
+    //         <th colspan="3">
+    //             <span style="font-weight: bold">${bus_name}</span> <br>
+    //             <span class="line-description">${bus_line_side.replace("->", "→")}</span>
+    //         </th>
+    //     </tr>
+    //     </thead>
+    //     <tr>
+    //     <td colspan="5"></td>
+    //     </tr>
+    //     <tbody id="tbody-bus-${bus_name}"></tbody></table></div>`);
+    // }
+
+    function cutByte(str, len) {
+        var l = 0;
+        for (var i = 0; i < str.length; i++) {
+            l += (str.charCodeAt(i) > 128) ? 2 : 1;
+            if (l > len) return str.substring(0, i);
+        }
+        return str;
+    }
+
+    function popup(msg) {
+        alert(msg);
+    }
+
+    function add_bus(tbody_selector, data) {
+        var lf_bus = "";
+        var lf_text = "";
+        var bus_type = "";
+        if (data.BUSTYPE === "D" || data.CARNO >= 7300 && data.CARNO <= 7599) {
+            lf_bus = "lf-bus";
+            lf_text = "저상";
+            bus_type = "저상 버스";
+        } else if (data.CARNO >= 6300 && data.CARNO <= 6999) {
+            bus_type = "경산 버스";
+        } else {
+            bus_type = "대구 버스";
+        }
+
+        if (data["BUSLINESIDE"] === "") {
+            data["BUSLINESIDE"] = `${data["from_bus_stop"]["BUSSTOPNAME"]}→${data["to_bus_stop"]["BUSSTOPNAME"]}`
+        }
+
+        var bus_stop_name = cutByte(data["bus_stop_name"], 19)
+        var to_bus_stop_name = cutByte(data["to_bus_stop"]["BUSSTOPNAME"], 19)
+        var bus_line_side = cutByte(data["BUSLINESIDE"], 38)
+
+        $(tbody_selector).append(`
+        <tr>
+            <td class="bus-number" data-bus="${data["BUSLINENO"]}">
+                ${data["BUSLINENO"]}
+            </td>
+            <td class="bus-mark">
+                ${Math.abs(data["offset"])}
+            </td>
+            <td class="before-text">
+                전
+            </td>
+            <td class="bus-current-station" onclick="popup('${data["bus_stop_name"]}')">
+                &nbsp;${bus_stop_name}
+            </td>
+            <td class="arrow">
+                ▷
+            <td class="to-station direction-${data["BUSDIRECTCD"]}" onclick="popup('${data["to_bus_stop"]["BUSSTOPNAME"]}')">
+                ${to_bus_stop_name}
+            </td>
+        </tr>
+        <tr>
+            <td  class="line-description">
+                ${lf_text}
+            </td>
+            <td colspan="2" class="line-description">
+
+            </td>
+            <td colspan="3" class="line-description" onclick="popup('${data["BUSLINESIDE"].replaceAll("->", "→")}')">
+                ${bus_line_side.replaceAll("->", "→")}
+            </td>
+        </tr>
+        <tr class="bus-bottom">
+            <td colspan="6"></td>
+        </tr>
+        <tr>
+            <td colspan="6"></td>
+        </tr>`);
+    }
+
+</script>

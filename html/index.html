@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>경산시 버스정보 조회 시스템</title>
+    <script src="jquery-3.6.0.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+            integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+            crossorigin="anonymous"></script>
+    <style>
+        #result > li {
+            padding-top: 0.5rem;
+        }
+
+
+        .line-description {
+            font-size: 0.8rem;
+            color: #808080;
+            text-align: center;
+        }
+
+        #help-desc, .help-desc-td {
+            border: 1px solid #444444;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container mt-3" style="justify-content: center;">
+    <div>
+        <h2 style="text-align: center;">경산시 버스정보 조회 시스템</h2>
+        <hr>
+    </div>
+
+    <div>
+        <label style="width: 100%;">
+            <span class="text-muted">정류장 이름</span>
+            <input id="keyword" type="text" style="width: 100%;" placeholder="검색할 정류장 이름을 입력하세요">
+        </label>
+    </div>
+
+    <div class="mt-1">
+        <button style="width: 100%" onclick="search()">검색</button>
+    </div>
+
+    <hr>
+
+    <div class="mt-1">
+        <ul id="result">
+            <li>검색어를 입력하세요</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <div style="font-size: 0.9em;">
+        <h5>도움말</h5>
+        표시형식:<br>
+        <table id="help-desc">
+            <tr>
+                <td class="help-desc-td">
+                    <span onclick="alert('(현재정류장)')">(현재정류장)</span>▷
+                    <span onclick="alert('(종점)')" style="color: #785EF0">(종점)</span>
+                </td>
+            </tr>
+            <tr>
+                <td class="line-description help-desc-td" onclick="alert('시작정류장→종료정류장 또는 분기노선 표기')">
+                    시작정류장→종료정류장 또는 분기노선 표기
+                </td>
+            </tr>
+        </table>
+        상행:<span style="color: #785EF0">보라색</span>, 하행:<span style="color: #FE6100">주황색</span><br>
+        글자가 잘린 정류장은 터치(클릭)시 모든 텍스트 표시됨<br>
+        안내: 데이터는 경산시교통정보센터에서 가져옵니다. 일부 대구 버스는 정보가 표시되지 않습니다.<br>
+    </div>
+
+    <hr>
+    문의: ahn[at]fastmail.com
+
+</div>
+<br>
+<script>
+    var keyword = $("#keyword")
+
+    $(document).ready(function () {
+        if ($("#keyword").val() !== "") {
+            search()
+        }
+
+        socket = io.connect("http://" + document.domain + ":" + location.port + "/");
+        socket.on('load_msg', function (msg) {
+            console.log(msg)
+        });
+    })
+
+    keyword.keypress(function (e) {
+        if (e.keyCode === 13) {
+            search()
+        }
+    })
+
+    function search() {
+        var keyword_val = keyword.val()
+        var result_element = $('#result');
+        if (!keyword_val) {
+            result_element.empty().append(`<li>검색어를 입력하세요</li>`)
+            return;
+        }
+
+        $.ajax({
+            url: '/search.json' + "?keyword=" + keyword_val,
+            success: function (data) {
+                console.log(data)
+                if (data["result"].length > 0) {
+                    result_element.empty()
+                    for (let i = 0; i < data["result"].length; i++) {
+                        const bus_stop = data["result"][i];
+                        result_element.append(`<li>
+                            <a href="bus.html#${bus_stop["BUSSTOPNAME"]}/${bus_stop["BUSSTOPID"]}">${bus_stop["BUSSTOPNAME"]}
+                            </a></li>`)
+                    }
+                } else {
+                    result_element.empty().append(`<li>검색 결과가 없습니다.</li>`)
+                }
+            },
+            error: function () {
+                result_element.empty().append(`<li>에러 발생</li>`)
+            }
+        })
+    }
+
+</script>
+
+</body>
+</html>

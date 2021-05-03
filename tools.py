@@ -25,7 +25,6 @@ def get_bus_direction(car_no, line_node_list):
     return None
 
 
-
 # 버스 실시간 위치(forwardPosition, ReversePosition)와 특정 정류장 사이의 거리를 계산한다.
 def get_bus_position_offset_from_node(bus_stop_id, line_node_list, write_lck=True):
     # Station 에 bus_stop_id 가 존재하는지 여부를 검사
@@ -66,6 +65,7 @@ def get_bus_position_offset_from_node(bus_stop_id, line_node_list, write_lck=Tru
             bus["offset"] = bus_idx - station_idx[bus_pos]
             bus["bus_stop_name"] = bus_station["BUSSTOPNAME"]
             bus["to_bus_stop"] = line_node_list[f"{bus_pos}Station"][-1]
+            bus["from_bus_stop"] = line_node_list[f"{bus_pos}Station"][0]
 
         # 리스트에 오프셋 추가
         offset_list[bus_pos].append(bus_idx - station_idx[bus_pos])

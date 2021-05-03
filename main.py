@@ -1,2 +1,37 @@
-import flask
+from flask import Flask, request, abort, redirect
 
+from bus.fetch import search_bus_stop
+from tools2 import flask_get_all_bus_position
+from flask_socketio import SocketIO, send
+
+app = Flask(__name__, static_url_path='', static_folder='html', )
+socket_io = SocketIO(app)
+
+
+@app.route('/bus.json')
+def bus():
+    try:
+        return flask_get_all_bus_position(request.args.get('bus_stop'), skip_last_station=True,
+                                          socketio_send=socket_io.emit)
+    except:
+        abort(500)
+
+
+@app.route('/search.json')
+def search():
+    try:
+        return {"result": search_bus_stop(request.args.get('keyword'))}
+    except:
+        abort(500)
+
+
+@app.route('/')
+def hello():
+    return redirect('index.html')
+
+
+if __name__ == '__main__':
+    import logging
+
+    logging.basicConfig(level=logging.DEBUG)
+    socket_io.run(app=app, debug=True, host="0.0.0.0")
