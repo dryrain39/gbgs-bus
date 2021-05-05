@@ -241,13 +241,13 @@
         })
     }
 
-    $("tbody").on("click", "tr > td.bus-number", function(e){
+    $("tbody").on("click", "tr > td.bus-number", function (e) {
         var current_bus_number = $(this).data('bus')
-        $(".bus-number").each(function(i, e){
+        $(".bus-number").each(function (i, e) {
             console.log($(e))
-            if($(e).data('bus') === current_bus_number){
+            if ($(e).data('bus') === current_bus_number) {
                 $(e).addClass('bg-selected')
-            }else{
+            } else {
                 $(e).removeClass('bg-selected')
             }
         })
@@ -256,6 +256,16 @@
     function update_table(data) {
 
         var bus_data = []
+        // realtime: 경산시에서 제공하는 도착정보
+        var bus_realtime_data = {}
+
+        for (let i = 0; i < data["bus_arrive_list"].length; i++) {
+            var bus = data["bus_arrive_list"][i];
+            bus_realtime_data[bus["CARTERMID"].slice(-4)] = {
+                "PREDICTTIME": bus["PREDICTTIME"],
+                "INX": bus["INX"],
+            }
+        }
 
         for (let i = 0; i < data["bus_line_list"].length; i++) {
             var bus_line = data["bus_line_list"][i];
@@ -269,10 +279,17 @@
                 bus["BUSLINENO"] = bus_line["BUSLINENO"]
                 bus["BUSLINESIDE"] = bus_line["BUSLINESIDE"] ? bus_line["BUSLINESIDE"] : "";
 
+                if (bus_realtime_data[bus["CARNO"]] !== undefined) {
+                    bus["PREDICTTIME"] = bus_realtime_data[bus["CARNO"]]["PREDICTTIME"]
+                    bus["INX"] = bus_realtime_data[bus["CARNO"]]["INX"]
+                }
+
                 bus_data.push(bus)
             }
 
         }
+
+        console.log(bus_realtime_data)
 
         bus_data.sort(function (a, b) {
             if (a.offset > b.offset) {
@@ -311,6 +328,15 @@
         return str;
     }
 
+    function ISOString(t) {
+        return t.slice(0, 4) + "-" +
+            t.slice(4, 6) + "-" +
+            t.slice(6, 8) + "T" +
+            t.slice(8, 10) + ":" +
+            t.slice(10, 12) + ":" +
+            t.slice(12, 14)
+    }
+
     function popup(msg) {
         alert(msg);
     }
@@ -320,9 +346,9 @@
         var lf_text = "";
         var bus_type = "";
         if (data.BUSTYPE === "D" || data.CARNO >= 7300 && data.CARNO <= 7599) {
-            lf_bus = "lf-bus";
-            lf_text = "저상";
-            bus_type = "저상 버스";
+            // lf_bus = "lf-bus";
+            // lf_text = "저상";
+            // bus_type = "저상 버스";
         } else if (data.CARNO >= 6300 && data.CARNO <= 6999) {
             bus_type = "경산 버스";
         } else {
@@ -337,16 +363,49 @@
         var to_bus_stop_name = cutByte(data["to_bus_stop"]["BUSSTOPNAME"], 19)
         var bus_line_side = cutByte(data["BUSLINESIDE"], 38)
 
+        // // 전, 전전 표시부분
+        var bus_mark = Math.abs(data["offset"]);
+        var before_text = "전";
+        //
+        // if (Math.abs(data["offset"]) < 3) {
+        //     bus_mark = "<span onclick='popup(\"전전, 전 또는 출발\")'>~2</span>";
+        // }
+
+        // 분 단위 표시부분
+        var minute_display = ""
+        var minute_display_text = ""
+        if (data["INX"] !== undefined) {
+            minute_display = (data["INX"] * 1)
+            minute_display_text = "분"
+        }
+
+        // 도착정보에 뜨지 않으면서 2전 정류장인 버스는 제외
+        if(Math.abs(data["offset"]) < 3 && data["INX"] === undefined){
+            console.log("skipped", data);
+            return;
+        }
+
+        // 부정확 표시부분
+        var incorrect_text = ""
+        if(new Date() - new Date(ISOString(data["RCVTIME"])) > 150 * 1000){
+            incorrect_text = `<span style="color: #a17d7d;
+                            text-decoration: underline" onclick="popup('마지막 데이터가 2.5분이상 경과된 경우.')">부정확</span>`
+        }
+        console.log(new Date() - new Date(ISOString(data["RCVTIME"])))
+        console.log(new Date())
+        console.log(new Date(ISOString(data["RCVTIME"])))
+
+
         $(tbody_selector).append(`
         <tr>
             <td class="bus-number" data-bus="${data["BUSLINENO"]}">
                 ${data["BUSLINENO"]}
             </td>
             <td class="bus-mark">
-                ${Math.abs(data["offset"])}
+                ${bus_mark}
             </td>
             <td class="before-text">
-                전
+                ${before_text}
             </td>
             <td class="bus-current-station" onclick="popup('${data["bus_stop_name"]}')">
                 &nbsp;${bus_stop_name}
@@ -358,11 +417,14 @@
             </td>
         </tr>
         <tr>
-            <td  class="line-description">
-                ${lf_text}
+            <td class="line-description">
+                ${incorrect_text}
             </td>
-            <td colspan="2" class="line-description">
-
+            <td colspan="1" class="line-description" style="text-align: right">
+                ${minute_display}
+            </td>
+            <td colspan="1" class="line-description" style="text-align: left">
+                ${minute_display_text}
             </td>
             <td colspan="3" class="line-description" onclick="popup('${data["BUSLINESIDE"].replaceAll("->", "→")}')">
                 ${bus_line_side.replaceAll("->", "→")}
