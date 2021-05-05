@@ -188,7 +188,6 @@
         socket.emit("ping", 1);
 
         socket.on('load_msg', function (msg) {
-            console.log(msg)
             if (!load_ok) {
                 $('#tbd').append(`<tr>
                 <td colspan="6">
@@ -220,7 +219,6 @@
         $.ajax({
             url: "/bus.json?bus_stop=" + bus_stop,
             success: function (data) {
-                console.log(data)
                 if (data["bus_line_list"].length > 0) {
                     update_table(data);
                 } else {
@@ -244,7 +242,6 @@
     $("tbody").on("click", "tr > td.bus-number", function (e) {
         var current_bus_number = $(this).data('bus')
         $(".bus-number").each(function (i, e) {
-            console.log($(e))
             if ($(e).data('bus') === current_bus_number) {
                 $(e).addClass('bg-selected')
             } else {
@@ -289,8 +286,6 @@
 
         }
 
-        console.log(bus_realtime_data)
-
         bus_data.sort(function (a, b) {
             if (a.offset > b.offset) {
                 return -1;
@@ -301,7 +296,6 @@
             return 0;
         })
 
-        console.log(bus_data)
         load_done();
         $("#tbd").empty();
 
@@ -380,20 +374,16 @@
         }
 
         // 도착정보에 뜨지 않으면서 2전 정류장인 버스는 제외
-        if(Math.abs(data["offset"]) < 3 && data["INX"] === undefined){
-            console.log("skipped", data);
+        if (Math.abs(data["offset"]) < 3 && data["INX"] === undefined) {
             return;
         }
 
         // 부정확 표시부분
         var incorrect_text = ""
-        if(new Date() - new Date(ISOString(data["RCVTIME"])) > 150 * 1000){
+        if (new Date() - new Date(ISOString(data["RCVTIME"])) > 150 * 1000) {
             incorrect_text = `<span style="color: #a17d7d;
                             text-decoration: underline" onclick="popup('마지막 데이터가 2.5분이상 경과된 경우.')">부정확</span>`
         }
-        console.log(new Date() - new Date(ISOString(data["RCVTIME"])))
-        console.log(new Date())
-        console.log(new Date(ISOString(data["RCVTIME"])))
 
 
         $(tbody_selector).append(`
