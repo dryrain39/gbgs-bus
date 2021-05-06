@@ -22,3 +22,14 @@ def cached_get_bus_line_node_list(bus_line_id, hot_ttl=20, cold_ttl=170):
         cache.set('get_bus_line_node_list_' + bus_line_id, bus_line_node_list, expire=ttl)
 
     return bus_line_node_list
+
+
+def cached_all_bus_stop(cold_ttl=604800):  # 604800=1w
+    all_bus_stop = cache.get('all_bus_stop', None)
+    if all_bus_stop is None:
+        all_bus_stop = search_bus_stop(keyword="%%")
+        all_bus_stop = sorted(list(map(lambda x: x["BUSSTOPNAME"], all_bus_stop)))
+
+        cache.set('all_bus_stop', all_bus_stop, expire=cold_ttl)
+
+    return all_bus_stop
