@@ -127,18 +127,25 @@
             return;
         }
 
+        result_element.empty().append(`<li>검색중... 잠시만 기다려주세요.</li>`)
+
         $.ajax({
             url: '/search.json' + "?keyword=" + keyword_val,
             success: function (data) {
                 console.log(data)
                 if (data["result"].length > 0) {
                     result_element.empty()
+                    if(data["result"].length === 1){
+                        window.location = `bus.html#${data["result"][0]["BUSSTOPNAME"]}/${data["result"][0]["BUSSTOPID"]}`
+                    }
+
                     for (let i = 0; i < data["result"].length; i++) {
                         const bus_stop = data["result"][i];
                         result_element.append(`<li>
                             <a href="bus.html#${bus_stop["BUSSTOPNAME"]}/${bus_stop["BUSSTOPID"]}">${bus_stop["BUSSTOPNAME"]}
                             </a></li>`)
                     }
+                    keyword.blur();
                 } else {
                     result_element.empty().append(`<li>검색 결과가 없습니다.</li>`)
                 }
