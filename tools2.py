@@ -10,7 +10,12 @@ def flask_get_all_bus_position_offset_related_bus_stop(bus_stop_id, socket_io=No
     bus_lines = get_bus_line_list(bus_stop_id)
 
     for bus_line in bus_lines["bus_line_list"]:
-        node_list = cached_get_bus_line_node_list(bus_line["BUSLINEID"])
+        try:
+            node_list = cached_get_bus_line_node_list(bus_line["BUSLINEID"])
+        except Exception as e:
+            print(e)
+            continue
+
         if socket_io is not None:
             socket_io.emit("load_msg", {
                 "func": "get_bus_position_offset_from_node",
