@@ -46,7 +46,7 @@
     </div>
 
     <div class="mt-1">
-        <button style="width: 100%" onclick="search()">검색</button>
+        <button style="width: 100%" onclick="search(true)">검색</button>
     </div>
 
     <hr>
@@ -90,13 +90,13 @@
 
     $(document).ready(function () {
         if ($("#keyword").val() !== "") {
-            search()
+            search(false)
         }
     })
 
     keyword.keypress(function (e) {
         if (e.keyCode === 13) {
-            search()
+            search(true)
         }
     })
 
@@ -119,7 +119,7 @@
         })
     }
 
-    function search() {
+    function search(autoRedirect) {
         var keyword_val = keyword.val()
         var result_element = $('#result');
         if (!keyword_val) {
@@ -135,7 +135,7 @@
                 console.log(data)
                 if (data["result"].length > 0) {
                     result_element.empty()
-                    if(data["result"].length === 1){
+                    if(autoRedirect && data["result"].length === 1){
                         window.location = `bus.html#${data["result"][0]["BUSSTOPNAME"]}/${data["result"][0]["BUSSTOPID"]}`
                     }
 
