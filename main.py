@@ -7,6 +7,7 @@ from flask import Flask, request, abort, redirect
 from bus.fetch import search_bus_stop
 from tools2 import flask_get_all_bus_position
 from flask_socketio import SocketIO
+from cache import cached_all_bus_stop
 
 app = Flask(__name__, static_url_path='', static_folder='html')
 socket_io = SocketIO(app)
@@ -26,6 +27,14 @@ def bus():
 def search():
     try:
         return {"result": search_bus_stop(request.args.get('keyword'))}
+    except:
+        abort(500)
+
+
+@app.route('/all_bus_stop.json')
+def all_bus_stop():
+    try:
+        return {"result": cached_all_bus_stop()}
     except:
         abort(500)
 

@@ -39,7 +39,9 @@
     <div>
         <label style="width: 100%;">
             <span class="text-muted">정류장 이름</span>
-            <input id="keyword" type="text" style="width: 100%;" placeholder="검색할 정류장 이름을 입력하세요">
+            <input id="keyword" type="text" list="bus_stops" style="width: 100%;" placeholder="검색할 정류장 이름을 입력하세요">
+            <datalist id="bus_stops">
+            </datalist>
         </label>
     </div>
 
@@ -83,6 +85,7 @@
 </div>
 <br>
 <script>
+    update_datalist();
     var keyword = $("#keyword")
 
     $(document).ready(function () {
@@ -96,6 +99,25 @@
             search()
         }
     })
+
+    function update_datalist() {
+        $.ajax({
+            url: '/all_bus_stop.json',
+            success: function (data) {
+                var dl = $("#bus_stops")
+
+                if (data["result"].length > 0) {
+                    dl.empty()
+                    for (let i = 0; i < data["result"].length; i++) {
+                        const bus_stop = data["result"][i];
+                        dl.append(`<option value="${bus_stop}">`)
+                    }
+                }
+            },
+            error: function () {
+            }
+        })
+    }
 
     function search() {
         var keyword_val = keyword.val()
