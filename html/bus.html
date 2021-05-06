@@ -274,6 +274,8 @@
             var bus = data["bus_arrive_list"][i];
             bus_realtime_data[bus["CARTERMID"].slice(-4)] = {
                 "PREDICTTIME": bus["PREDICTTIME"],
+                "BUSSTOPGAP": bus["BUSSTOPGAP"],
+                "NOWBUSBUSSTOPID": bus["NOWBUSBUSSTOPID"],
                 "INX": bus["INX"],
             }
         }
@@ -292,6 +294,8 @@
 
                 if (bus_realtime_data[bus["CARNO"]] !== undefined) {
                     bus["PREDICTTIME"] = bus_realtime_data[bus["CARNO"]]["PREDICTTIME"]
+                    bus["AI_BUSSTOPGAP"] = bus_realtime_data[bus["CARNO"]]["BUSSTOPGAP"];
+                    bus["AI_NOWBUSBUSSTOPID"] = bus_realtime_data[bus["CARNO"]]["NOWBUSBUSSTOPID"];
                     bus["INX"] = bus_realtime_data[bus["CARNO"]]["INX"]
                 }
 
