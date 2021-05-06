@@ -50,6 +50,7 @@
             vertical-align: middle;
             font-weight: bold;
             background-color: #dddddd;
+            cursor: pointer;
         }
 
         .before-text {
@@ -65,7 +66,7 @@
             overflow: hidden;
             /*white-space: nowrap;*/
             size: 0.7rem;
-
+            cursor: pointer;
         }
 
         .arrow {
@@ -78,13 +79,14 @@
             overflow: hidden;
             /*white-space: nowrap;*/
             size: 0.7rem;
-
+            cursor: pointer;
         }
 
         .line-description {
             font-size: 0.9rem;
             color: #808080;
             text-align: center;
+            cursor: pointer;
         }
 
         .lf-bus {
@@ -241,12 +243,24 @@
 
     $("tbody").on("click", "tr > td.bus-number", function (e) {
         var current_bus_number = $(this).data('bus')
+        var is_selected = $(this).data('selected');
+
         $(".bus-number").each(function (i, e) {
-            if ($(e).data('bus') === current_bus_number) {
-                $(e).addClass('bg-selected')
-            } else {
+            if (is_selected) {
                 $(e).removeClass('bg-selected')
+                    .data('selected', false);
+                $('.row-' + $(e).data('bus')).show()
+            } else {
+                if ($(e).data('bus') === current_bus_number) {
+                    $(e).addClass('bg-selected').data('selected', true);
+                    $('.row-' + $(e).data('bus')).show()
+                } else {
+                    $(e).removeClass('bg-selected')
+                    $('.row-' + $(e).data('bus')).hide()
+                    console.log('row-' + $(e).data('bus'))
+                }
             }
+
         })
     })
 
@@ -387,7 +401,7 @@
 
 
         $(tbody_selector).append(`
-        <tr>
+        <tr class="row-${data["BUSLINENO"]}">
             <td class="bus-number" data-bus="${data["BUSLINENO"]}">
                 ${data["BUSLINENO"]}
             </td>
@@ -406,7 +420,7 @@
                 ${to_bus_stop_name}
             </td>
         </tr>
-        <tr>
+        <tr class="row-${data["BUSLINENO"]}">
             <td class="line-description">
                 ${incorrect_text}
             </td>
@@ -420,10 +434,10 @@
                 ${bus_line_side.replaceAll("->", "→")}
             </td>
         </tr>
-        <tr class="bus-bottom">
+        <tr class="bus-bottom row-${data["BUSLINENO"]}">
             <td colspan="6"></td>
         </tr>
-        <tr>
+        <tr class="row-${data["BUSLINENO"]}">
             <td colspan="6"></td>
         </tr>`);
     }
